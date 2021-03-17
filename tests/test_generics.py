@@ -1,6 +1,20 @@
 import sys
 from enum import Enum
-from typing import Any, Callable, ClassVar, Dict, Generic, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Generic,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import pytest
 from typing_extensions import Literal
@@ -787,9 +801,17 @@ def test_nested_identity_parameterization():
 @skip_36
 def test_replace_types():
     T = TypeVar('T')
+    KT = TypeVar('KT')
+    VT = TypeVar('VT')
 
     class Model(GenericModel, Generic[T]):
         a: T
+
+    class ModelWithMappingSubclass(GenericModel, Generic[KT, VT]):
+        class GenericMapping(Mapping[KT, VT]):
+            pass
+
+        mapping: GenericMapping[KT, VT]
 
     assert replace_types(T, {T: int}) is int
     assert replace_types(List[Union[str, list, T]], {T: int}) == List[Union[str, list, int]]
@@ -800,6 +822,7 @@ def test_replace_types():
     assert replace_types(T, {}) is T
     assert replace_types(Type[T], {T: int}) == Type[int]
     assert replace_types(Model[T], {T: T}) == Model[T]
+    assert replace_types(ModelWithMappingSubclass[str, str], {KT: str, VT: str}) == ModelWithMappingSubclass[str, str]
 
     if sys.version_info >= (3, 9):
         # Check generic aliases (subscripted builtin types) to make sure they
